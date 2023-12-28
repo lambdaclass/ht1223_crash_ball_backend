@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use itertools::Itertools;
+use libm;
 use rustler::NifMap;
 use rustler::NifTaggedEnum;
 
@@ -35,6 +36,7 @@ pub struct Player {
     pub inventory: Vec<Option<Loot>>,
     next_actions: Vec<ActionTracker>,
     skill_moving_params: Option<SkillMovingParams>,
+    pub laps: i8,
 }
 
 #[derive(NifTaggedEnum, Clone, PartialEq, Eq)]
@@ -76,6 +78,7 @@ impl Player {
             next_actions: Vec::new(),
             skills_keys_to_execute: Vec::new(),
             skill_moving_params: None,
+            laps: 0,
         }
     }
 
@@ -89,8 +92,11 @@ impl Player {
             return;
         }
 
+        let previous_angle_to_center = libm::atan2(self.position.y as f64, self.position.x as f64);
+
         self.add_action(Action::Moving, 0);
         self.direction = angle_degrees;
+        let previous_position = self.position.clone();
         self.position = map::next_position(
             &self.position,
             angle_degrees,
@@ -98,6 +104,28 @@ impl Player {
             config.game.inner_radius as f32,
             config.game.outer_radius as f32,
         );
+
+        if self.any_obstacle_collide(&config) {
+            self.position = previous_position
+        }
+        let new_angle_to_center = libm::atan2(self.position.y as f64, self.position.x as f64);
+
+        // Comparisons with 1 and -1 are to avoid counting laps when we go from pi to -pi
+        if previous_angle_to_center > 0 as f64
+            && previous_angle_to_center < 1 as f64
+            && new_angle_to_center < 0 as f64
+            && new_angle_to_center > -1 as f64
+        {
+            self.laps = self.laps + 1;
+        }
+        // Comparisons with -1 and 1 are to avoid removing laps when we go from -pi to pi
+        if previous_angle_to_center < 0 as f64
+            && previous_angle_to_center > -1 as f64
+            && new_angle_to_center > 0 as f64
+            && new_angle_to_center < 1 as f64
+        {
+            self.laps = self.laps - 1;
+        }
     }
 
     pub fn skill_move(&mut self, elapsed_time_ms: u64, config: &Config) {
@@ -399,6 +427,12 @@ impl Player {
 
     pub const fn is_targetable(&self) -> bool {
         self.skill_moving_params.is_none()
+    }
+
+    fn any_obstacle_collide(&mut self, config: &Config) ->  bool{
+        config.game.obstacles.clone().into_iter().any(|obstacle|{
+            map::hit_boxes_collide(&self.position, &obstacle.position, self.size, obstacle.size)
+        })
     }
 }
 

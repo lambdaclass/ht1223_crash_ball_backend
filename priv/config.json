@@ -166,6 +166,16 @@
   ],
   "projectiles": [
     {
+      "name": "ball",
+      "base_damage": 0,
+      "base_speed": 60,
+      "base_size": 20,
+      "remove_on_collision": false,
+      "on_hit_effects": [],
+      "duration_ms": 999999,
+      "max_distance": 999999
+    },
+    {
       "name": "projectile_slingshot",
       "base_damage": 7,
       "base_speed": 60,
@@ -173,7 +183,7 @@
       "remove_on_collision": true,
       "on_hit_effects": [],
       "duration_ms": 999999,
-      "max_distance": 1500
+      "max_distance": 10000
     },
     {
       "name": "projectile_poison_dart",
@@ -322,7 +332,7 @@
       "base_health": 100,
       "max_inventory_size": 1,
       "skills": {
-        "1": "hit",
+        "1": "slingshot",
         "2": "leap",
         "3": "circle_hit"
       }
@@ -331,8 +341,39 @@
   "game": {
     "outer_radius": 5000,
     "inner_radius": 0,
+    "laps_to_win": 3,
     "tick_interval_ms": 30,
     "zone_starting_radius": 14000,
+    "obstacles": [
+      {
+        "position": {
+          "x": 1000,
+          "y": -1000 
+        },
+        "size": 200
+      },
+      {
+        "position": {
+          "x": -1000,
+          "y": -1000 
+        },
+        "size": 200
+      },
+      {
+        "position": {
+          "x": 1000,
+          "y": 1000 
+        },
+        "size": 200
+      },
+      {
+        "position": {
+          "x": -1000,
+          "y": 1000 
+        },
+        "size": 200
+      }
+    ],
     "zone_modifications": [
       {
         "duration_ms": 180000,
@@ -400,47 +441,23 @@
     ],
     "loot_interval_ms": 7000,
     "auto_aim_max_distance": 2000,
-    "initial_positions": [
-      {
-        "x": -1500,
-        "y": 4000
-      },
-      {
-        "x": -3500,
-        "y": 2000
-      },
-      {
-        "x": 0,
-        "y": 2000
-      },
-      {
-        "x": 1500,
-        "y": 4000
-      },
-      {
-        "x": 3500,
-        "y": 2000
-      },
-      {
-        "x": 3500,
-        "y": -2000
-      },
-      {
-        "x": 1500,
-        "y": -4000
-      },
-      {
-        "x": 0,
-        "y": 0
-      },
-      {
-        "x": -1500,
-        "y": -4000
-      },
-      {
-        "x": -3500,
-        "y": -2000
-      }
-    ]
+    "initial_positions": {
+        "1": {
+          "x": 0,
+          "y": -1000
+        },
+        "2": {
+          "x": 1000,
+          "y": 0
+        },
+        "3": {
+          "x": 0, 
+          "y": 1000
+        },
+        "4": {
+          "x": -1000, 
+          "y": 0
+        }
+    }
   }
 }

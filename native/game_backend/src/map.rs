@@ -1,12 +1,12 @@
-use std::f32::consts::PI;
+use std::{f32::consts::PI, collections::HashMap};
 
 use rand::Rng;
 use rustler::NifMap;
 use serde::Deserialize;
 
-use crate::player::Player;
+use crate::{player::Player, projectile::Projectile};
 
-#[derive(NifMap, Clone, Deserialize, Copy)]
+#[derive(NifMap, Clone, Deserialize, Copy, Debug)]
 pub struct Position {
     pub x: i64,
     pub y: i64,

@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-
 use rustler::NifMap;
 use rustler::NifTaggedEnum;
 use rustler::NifTuple;
@@ -38,8 +37,17 @@ pub struct GameConfigFile {
     zone_starting_radius: u64,
     zone_modifications: Vec<ZoneModificationConfigFile>,
     auto_aim_max_distance: f32,
-    initial_positions: Vec<Position>,
+    initial_positions: HashMap<u64, Position>,
     tick_interval_ms: u64,
+    obstacles: Vec<Obstacle>,
+    laps_to_win: i8,
+}
+
+#[derive(Deserialize, NifMap, Debug, Clone, Copy)]
+pub struct Obstacle{
+    pub position: Position,
+    pub size: u64,
+    
 }
 
 #[derive(Deserialize)]
@@ -52,7 +60,7 @@ pub struct ZoneModificationConfigFile {
     modification: ZoneModificationModifier,
 }
 
-#[derive(NifMap)]
+#[derive(NifMap, Debug)]
 pub struct GameConfig {
     pub outer_radius: u64,
     pub inner_radius: u64,
@@ -60,11 +68,13 @@ pub struct GameConfig {
     pub zone_starting_radius: u64,
     pub zone_modifications: Vec<ZoneModificationConfig>,
     pub auto_aim_max_distance: f32,
-    pub initial_positions: Vec<Position>,
+    pub initial_positions: HashMap<u64, Position>,
     pub tick_interval_ms: u64,
+    pub obstacles: Vec<Obstacle>,
+    pub laps_to_win: i8,
 }
 
-#[derive(NifMap, Clone)]
+#[derive(NifMap, Clone, Debug)]
 pub struct ZoneModificationConfig {
     duration_ms: u64,
     interval_ms: u64,
@@ -74,7 +84,7 @@ pub struct ZoneModificationConfig {
     modification: ZoneModificationModifier,
 }
 
-#[derive(Deserialize, NifTaggedEnum, Clone)]
+#[derive(Deserialize, NifTaggedEnum, Clone, Debug)]
 #[serde(tag = "modifier", content = "value")]
 pub enum ZoneModificationModifier {
     Additive(i64),
@@ -112,7 +122,7 @@ pub struct GameState {
     pub next_killfeed: Vec<KillEvent>,
     pub killfeed: Vec<KillEvent>,
     pub zone: Zone,
-    next_id: u64,
+    pub next_id: u64,
     pub pending_damages: Vec<DamageTracker>,
 }
 
@@ -144,6 +154,8 @@ impl GameConfig {
             auto_aim_max_distance: game_config.auto_aim_max_distance,
             initial_positions: game_config.initial_positions,
             tick_interval_ms: game_config.tick_interval_ms,
+            obstacles: game_config.obstacles,
+            laps_to_win: game_config.laps_to_win,
         }
     }
 }
@@ -184,6 +196,10 @@ impl GameState {
 
     pub fn push_loot(&mut self, loot: Loot) {
         self.loots.push(loot);
+    }
+
+    pub fn push_projectile(&mut self, projectile: Projectile) {
+        self.projectiles.push(projectile);
     }
 
     pub fn move_player(&mut self, player_id: u64, angle: f32) {
@@ -445,7 +461,7 @@ impl GameState {
         update_player_actions(&mut self.players, time_diff);
         self.activate_skills();
         update_player_cooldowns(&mut self.players, time_diff);
-        move_projectiles(&mut self.projectiles, time_diff, &self.config);
+        move_projectiles(&mut self.projectiles, &self.players, time_diff, &self.config, &mut self.pending_damages);
         apply_projectiles_collisions(
             &mut self.projectiles,
             &mut self.players,
@@ -586,7 +602,7 @@ fn update_player_cooldowns(players: &mut HashMap<u64, Player>, elapsed_time_ms: 
     })
 }
 
-fn move_projectiles(projectiles: &mut Vec<Projectile>, time_diff: u64, config: &Config) {
+fn move_projectiles(projectiles: &mut Vec<Projectile>, players: &HashMap<u64, Player>, time_diff: u64, config: &Config, pending_damages: &mut Vec<DamageTracker>) {
     // Clear out projectiles that are no longer valid
     let _ = projectiles
         .iter()
@@ -595,12 +611,22 @@ fn move_projectiles(projectiles: &mut Vec<Projectile>, time_diff: u64, config: &
         projectile.active
             && projectile.duration_ms > 0
             && projectile.max_distance > 0
-            && !map::collision_with_edge(
-                &projectile.position,
-                projectile.size,
+            && if let Some(player_id) = map::collision_with_edge(
+                &projectile,
+                players,
                 config.game.outer_radius,
                 config.game.inner_radius,
-            )
+            ){
+                pending_damages.push(DamageTracker {
+                    attacked_id: player_id,
+                    attacker: EntityOwner::Player(projectile.player_id),
+                    damage: projectile.damage as i64,
+                    on_hit_effects: projectile.on_hit_effects.clone(),
+                });
+                false
+            } else {
+                true
+            }
     });
 
     projectiles.iter_mut().for_each(|projectile| {
