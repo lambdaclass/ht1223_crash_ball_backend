@@ -170,7 +170,7 @@
     {
       "name": "ball",
       "base_damage": 10,
-      "base_speed": 20,
+      "base_speed": 30,
       "base_size": 100,
       "remove_on_collision": false,
       "bounce": true,
@@ -340,8 +340,8 @@
     {
       "name": "muflus",
       "active": true,
-      "base_speed": 25,
-      "base_size": 150,
+      "base_speed": 40,
+      "base_size": 300,
       "base_health": 100,
       "max_inventory_size": 1,
       "skills": {
