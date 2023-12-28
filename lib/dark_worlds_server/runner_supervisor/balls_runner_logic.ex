@@ -11,6 +11,13 @@ defmodule DarkWorldsServer.RunnerSupervisor.BallsRunnerLogic do
     Map.put(state, :game_state, game_state)
     |> put_in([:player_timestamps, user_id], timestamp)
   end
+  def perform_action(state, {:move, user_id, %Move{angle: angle}, timestamp}) when angle > 90.0 or angle < -90 do
+    perform_action(state, {:move, user_id, %Move{angle: 180.0}, timestamp})
+  end
+  def perform_action(state, {:move, user_id, %Move{angle: angle}, timestamp}) when angle < 90.0 and angle > -90.0 do
+    perform_action(state, {:move, user_id, %Move{angle: 0.0}, timestamp})
+  end
+
 
   def perform_action(state, {:use_skill, user_id, %UseSkill{skill: skill} = use_skill, timestamp}) do
     player_id = state.user_to_player[user_id] || user_id
@@ -32,5 +39,8 @@ defmodule DarkWorldsServer.RunnerSupervisor.BallsRunnerLogic do
     |> put_in([:player_timestamps, user_id], timestamp)
   end
 
-  def perform_action(state, _), do: state
+  def perform_action(state, msg) do
+    IO.inspect(msg)
+    state
+  end
 end
