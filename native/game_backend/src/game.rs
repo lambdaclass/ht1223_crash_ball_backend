@@ -1,8 +1,8 @@
-use std::collections::HashMap;
 use rustler::NifMap;
 use rustler::NifTaggedEnum;
 use rustler::NifTuple;
 use serde::Deserialize;
+use std::collections::HashMap;
 
 use crate::config::Config;
 use crate::effect;
@@ -44,10 +44,9 @@ pub struct GameConfigFile {
 }
 
 #[derive(Deserialize, NifMap, Debug, Clone, Copy)]
-pub struct Obstacle{
+pub struct Obstacle {
     pub position: Position,
     pub size: u64,
-    
 }
 
 #[derive(Deserialize)]
@@ -461,7 +460,13 @@ impl GameState {
         update_player_actions(&mut self.players, time_diff);
         self.activate_skills();
         update_player_cooldowns(&mut self.players, time_diff);
-        move_projectiles(&mut self.projectiles, &self.players, time_diff, &self.config, &mut self.pending_damages);
+        move_projectiles(
+            &mut self.projectiles,
+            &mut self.players,
+            time_diff,
+            &self.config,
+            &mut self.pending_damages,
+        );
         apply_projectiles_collisions(
             &mut self.projectiles,
             &mut self.players,
@@ -602,7 +607,13 @@ fn update_player_cooldowns(players: &mut HashMap<u64, Player>, elapsed_time_ms: 
     })
 }
 
-fn move_projectiles(projectiles: &mut Vec<Projectile>, players: &HashMap<u64, Player>, time_diff: u64, config: &Config, pending_damages: &mut Vec<DamageTracker>) {
+fn move_projectiles(
+    projectiles: &mut Vec<Projectile>,
+    players: &mut HashMap<u64, Player>,
+    time_diff: u64,
+    config: &Config,
+    pending_damages: &mut Vec<DamageTracker>,
+) {
     // Clear out projectiles that are no longer valid
     projectiles.retain(|projectile| {
         projectile.active
@@ -613,13 +624,20 @@ fn move_projectiles(projectiles: &mut Vec<Projectile>, players: &HashMap<u64, Pl
                 players,
                 config.game.width,
                 config.game.height,
-            ){
+            ) {
                 pending_damages.push(DamageTracker {
                     attacked_id: player_id,
                     attacker: EntityOwner::Player(projectile.player_id),
                     damage: projectile.damage as i64,
                     on_hit_effects: projectile.on_hit_effects.clone(),
                 });
+
+                if let Some(collided_zone_player) = players.get_mut(&player_id) {
+                    if collided_zone_player.status == PlayerStatus::Death {
+                        return true;
+                    }
+                }
+
                 false
             } else {
                 true
