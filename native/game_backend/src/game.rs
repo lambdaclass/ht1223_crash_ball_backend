@@ -1,10 +1,5 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::sync::Arc;
-
-use itertools::Itertools;
-use libm;
-use libm::atan2;
 use rustler::NifMap;
 use rustler::NifTaggedEnum;
 use rustler::NifTuple;
@@ -644,7 +639,11 @@ fn move_projectiles(
             }
     });
 
+
     projectiles.iter_mut().for_each(|projectile| {
+        if let Some(obstacle) = map::any_obstacle_collide(&projectile.position, projectile.size, config){
+            projectile.calculate_bounce(&obstacle.position)
+        }
         projectile.duration_ms = projectile.duration_ms.saturating_sub(time_diff);
         projectile.max_distance = projectile.max_distance.saturating_sub(projectile.speed);
         projectile.position = map::next_position(
@@ -659,7 +658,7 @@ fn move_projectiles(
 fn apply_projectiles_collisions(
     projectiles: &mut [Projectile],
     players: &mut HashMap<u64, Player>,
-    pending_damages: &mut Vec<DamageTracker>,
+    _pending_damages: &mut Vec<DamageTracker>,
 ) {
     projectiles.iter_mut().for_each(|projectile| {
         for player in players.values_mut() {
@@ -690,18 +689,8 @@ fn apply_projectiles_collisions(
                     projectile.active = false;
                 }
 
-                if (projectile.bounce) {
-                    let dy = -(projectile.position.y + (projectile.size / 2) as i64)
-                        + (player.position.y + (player.size / 2) as i64);
-                    let dx = -(projectile.position.x + (projectile.size / 2) as i64)
-                        + (player.position.x + (player.size / 2) as i64);
-                    let angle_between = atan2(dy as f64, dx as f64) as f32;
-
-                    let normalized_angle = (angle_between + 360.0) % 360.0;
-
-                    let reflection_angle = 2.0 * normalized_angle - projectile.direction_angle;
-
-                    projectile.direction_angle = reflection_angle;
+                if projectile.bounce {
+                    projectile.calculate_bounce(&player.position);
                 }
                 break;
             }
