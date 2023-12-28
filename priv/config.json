@@ -339,9 +339,9 @@
     }
   ],
   "game": {
+    "outer_radius": 5000,
+    "inner_radius": 0,
     "laps_to_win": 3,
-    "width": 10000,
-    "height": 10000,
     "tick_interval_ms": 30,
     "zone_starting_radius": 14000,
     "obstacles": [

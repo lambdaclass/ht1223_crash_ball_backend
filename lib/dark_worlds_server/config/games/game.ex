@@ -9,14 +9,14 @@ defmodule DarkWorldsServer.Config.Games.Game do
 
   @primary_key {:id, :binary_id, autogenerate: true}
   schema "games" do
-    field(:width, :integer)
-    field(:height, :integer)
+    field(:outer_radius, :integer)
+    field(:inner_radius, :integer)
     field(:loot_interval_ms, :integer)
     field(:zone_starting_radius, :integer)
     field(:auto_aim_max_distance, :float)
     field(:initial_positions, :map)
     field(:tick_interval_ms, :integer)
-    field(:obstacles, {:array ,:map})
+    field(:obstacles, {:array, :map})
     field(:laps_to_win, :integer)
 
     has_many(:zone_modifications, ZoneModification)
@@ -28,8 +28,8 @@ defmodule DarkWorldsServer.Config.Games.Game do
   def changeset(game, attrs) do
     game
     |> cast(attrs, [
-      :width,
-      :height,
+      :outer_radius,
+      :inner_radius,
       :loot_interval_ms,
       :zone_starting_radius,
       :auto_aim_max_distance,
@@ -38,29 +38,32 @@ defmodule DarkWorldsServer.Config.Games.Game do
       :obstacles,
       :laps_to_win
     ])
-    |> validate_required([:width, :height, :auto_aim_max_distance, :tick_interval_ms])
+    |> validate_required([:outer_radius, :inner_radius, :auto_aim_max_distance, :tick_interval_ms])
     |> cast_assoc(:zone_modifications)
   end
 
-  def to_backend_map(game) do
-    %{
-      width: game.width,
+  def to_backend_map(game),
+    do: %{
+      outer_radius: game.outer_radius,
       auto_aim_max_distance: game.auto_aim_max_distance,
-      height: game.height,
+      inner_radius: game.inner_radius,
       initial_positions:
-        Enum.into(game.initial_positions, %{}, fn {player_id, positions} -> {String.to_integer(player_id), transform_map_keys_to_atoms(positions)} end),
+        Enum.into(game.initial_positions, %{}, fn {player_id, positions} ->
+          {String.to_integer(player_id), transform_map_keys_to_atoms(positions)}
+        end),
       loot_interval_ms: game.loot_interval_ms,
       zone_modifications: Enum.map(game.zone_modifications, &ZoneModification.to_backend_map/1),
       zone_starting_radius: game.zone_starting_radius,
       tick_interval_ms: game.tick_interval_ms,
-      obstacles: Enum.map(game.obstacles, fn map -> Enum.into(map, %{}, fn tuple -> transform_nested_map(tuple) end) end),
+      obstacles:
+        Enum.map(game.obstacles, fn map -> Enum.into(map, %{}, fn tuple -> transform_nested_map(tuple) end) end),
       laps_to_win: game.laps_to_win
     }
-  end
 
   defp transform_nested_map({key, %{} = value}) do
     {String.to_atom(key), transform_map_keys_to_atoms(value)}
   end
+
   defp transform_nested_map({key, value}) do
     {String.to_atom(key), value}
   end

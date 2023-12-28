@@ -101,7 +101,8 @@ impl Player {
             &self.position,
             angle_degrees,
             self.speed as f32,
-            config.game.width as f32,
+            config.game.inner_radius as f32,
+            config.game.outer_radius as f32,
         );
 
         if self.any_obstacle_collide(&config) {
@@ -137,7 +138,8 @@ impl Player {
                 &self.position,
                 self.direction,
                 speed,
-                config.game.width as f32,
+                config.game.inner_radius as f32,
+                config.game.outer_radius as f32,
             );
             moving_params.duration_ms = moving_params.duration_ms.saturating_sub(elapsed_time_ms);
 
