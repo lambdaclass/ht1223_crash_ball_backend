@@ -135,7 +135,10 @@ pub fn spawn_ball(config: &Config, id: u64) -> Option<Projectile> {
     let angle = rng.gen_range(0.0..360.);
     Some(Projectile::new(
         id,
-        Position {x: rng.gen_range(0..50), y: rng.gen_range(0..50)},
+        Position {
+            x: rng.gen_range(0..50),
+            y: rng.gen_range(0..50),
+        },
         angle,
         15,
         &config.projectiles[0],

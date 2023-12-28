@@ -85,12 +85,6 @@ pub fn next_position(
     let new_x = movement_amount.mul_add(angle_rad.cos(), current_position.x as f32);
     let new_y = movement_amount.mul_add(angle_rad.sin(), current_position.y as f32);
 
-    // if current_position.x.abs() > 1000 || current_position.y.abs() > 1000 {
-    //     // print!("{}/", direction_angle);
-    //     // print!("{}/", current_position.x);
-    //     // print!("{}\n", current_position.y);
-    // }
-    // This is to avoid  the overflow on the front end
     let radius = (width - 200.0) / 2.0;
 
     let center = Position { x: 0, y: 0 };
