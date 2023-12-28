@@ -39,8 +39,5 @@ defmodule DarkWorldsServer.RunnerSupervisor.BallsRunnerLogic do
     |> put_in([:player_timestamps, user_id], timestamp)
   end
 
-  def perform_action(state, msg) do
-    IO.inspect(msg)
-    state
-  end
+  def perform_action(state, _), do: state
 end
