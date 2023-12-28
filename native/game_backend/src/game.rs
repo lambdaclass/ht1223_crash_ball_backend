@@ -725,10 +725,10 @@ fn apply_projectiles_collisions(
                     projectile.direction_angle = (projectile.direction_angle + 360.) % 360.;
 
                     let multiplier = match collided_zone_player.position {
-                        Position { x: 0, y: -1000 } => 0.,
-                        Position { x: 1000, y: 0 } => 90.,
-                        Position { x: 0, y: 1000 } => 180.,
-                        Position { x: -1000, y: 0 } => 270.,
+                        Position { x: 0, y: -1500 } => 0.,
+                        Position { x: 1500, y: 0 } => 90.,
+                        Position { x: 0, y: 1500 } => 180.,
+                        Position { x: -1500, y: 0 } => 270.,
                         _ => 0.,
                     };
 
