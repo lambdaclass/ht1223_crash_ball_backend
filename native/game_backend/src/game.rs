@@ -698,7 +698,10 @@ fn apply_projectiles_collisions(
 
                 if projectile.bounce {
                     projectile.calculate_bounce(&player.position);
-                    projectile.update_attacked_list(&player.id)
+                    projectile.update_attacked_list(&player.id);
+                    if player.effects.iter().any(|(effect, _owner)| effect.name == "bouncing") {
+                        projectile.speed = (projectile.speed as f32 * 2.) as u64;
+                    }
                 }
                 break;
             }
