@@ -74,7 +74,7 @@
     {
       "name": "muflus",
       "active": true,
-      "base_speed": 40,
+      "base_speed": 300,
       "base_size": 300,
       "base_health": 100,
       "max_inventory_size": 1,
@@ -93,28 +93,28 @@
       {
         "position": {
           "x": 1650,
-          "y": -1650 
+          "y": -1650
         },
         "size": 400
       },
       {
         "position": {
           "x": -1650,
-          "y": -1650 
+          "y": -1650
         },
         "size": 400
       },
       {
         "position": {
           "x": 1650,
-          "y": 1650 
+          "y": 1650
         },
         "size": 400
       },
       {
         "position": {
           "x": -1650,
-          "y": 1650 
+          "y": 1650
         },
         "size": 400
       }
