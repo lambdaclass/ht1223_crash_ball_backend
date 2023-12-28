@@ -643,19 +643,22 @@ fn move_projectiles(
             }
     });
 
-
     let untouched_projectiles = projectiles.clone();
     projectiles.iter_mut().for_each(|projectile| {
-        if let Some(obstacle) = map::any_obstacle_collide(&projectile.position, projectile.size, config){
+        if let Some(obstacle) =
+            map::any_obstacle_collide(&projectile.position, projectile.size, config)
+        {
             projectile.calculate_bounce(&obstacle.position);
             projectile.attacked_player_ids = vec![];
         }
 
-        if let Some(collided_projectile) = map::any_projectile_collide(&projectile, &untouched_projectiles){
+        if let Some(collided_projectile) =
+            map::any_projectile_collide(&projectile, &untouched_projectiles)
+        {
             projectile.calculate_bounce(&collided_projectile.position);
             projectile.update_attacked_list(&collided_projectile.id)
         }
-        
+
         projectile.duration_ms = projectile.duration_ms.saturating_sub(time_diff);
         projectile.max_distance = projectile.max_distance.saturating_sub(projectile.speed);
         projectile.position = map::next_position(
@@ -704,7 +707,11 @@ fn apply_projectiles_collisions(
                 if projectile.bounce {
                     projectile.calculate_bounce(&player.position);
                     projectile.update_attacked_list(&player.id);
-                    if player.effects.iter().any(|(effect, _owner)| effect.name == "bouncing") {
+                    if player
+                        .effects
+                        .iter()
+                        .any(|(effect, _owner)| effect.name == "bouncing")
+                    {
                         projectile.speed = (projectile.speed as f32 * 2.) as u64;
                     }
                 }
@@ -715,19 +722,19 @@ fn apply_projectiles_collisions(
         if let Some(player_id) = map::collision_with_edge(&projectile, players) {
             if let Some(collided_zone_player) = players.get_mut(&player_id) {
                 if collided_zone_player.status == PlayerStatus::Death && projectile.bounce {
-                    let dy = -(projectile.position.y + (projectile.size / 2) as i64)
-                        + (collided_zone_player.position.y
-                            + (collided_zone_player.size / 2) as i64);
-                    let dx = -(projectile.position.x + (projectile.size / 2) as i64)
-                        + (collided_zone_player.position.x
-                            + (collided_zone_player.size / 2) as i64);
-                    let angle_between = atan2(dy as f64, dx as f64) as f32;
+                    projectile.direction_angle = (projectile.direction_angle + 360.) % 360.;
 
-                    let normalized_angle = (angle_between + 360.0) % 360.0;
+                    let multiplier = match collided_zone_player.position {
+                        Position { x: 0, y: -1000 } => 0.,
+                        Position { x: 1000, y: 0 } => 90.,
+                        Position { x: 0, y: 1000 } => 180.,
+                        Position { x: -1000, y: 0 } => 270.,
+                        _ => 0.,
+                    };
 
-                    let reflection_angle = 2.0 * normalized_angle - projectile.direction_angle;
+                    let new_angle = 90. as f32 - projectile.direction_angle % 90.;
 
-                    projectile.direction_angle = reflection_angle;
+                    projectile.direction_angle = new_angle + multiplier;
                 }
             }
         }

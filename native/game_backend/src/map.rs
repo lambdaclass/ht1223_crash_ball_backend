@@ -4,7 +4,12 @@ use rand::Rng;
 use rustler::NifMap;
 use serde::Deserialize;
 
-use crate::{player::Player, projectile::Projectile, config::Config, game::Obstacle};
+use crate::{
+    config::Config,
+    game::Obstacle,
+    player::Player,
+    projectile::{self, Projectile},
+};
 
 #[derive(NifMap, Clone, Deserialize, Copy, Debug)]
 pub struct Position {
@@ -20,15 +25,27 @@ pub fn hit_boxes_collide(center1: &Position, center2: &Position, size1: u64, siz
     centers_distance <= collision_distance
 }
 
-pub fn any_obstacle_collide(position: &Position, size: u64, config: &Config) ->  Option<Obstacle>{
-    config.game.obstacles.clone().into_iter().find(|obstacle|{
-        hit_boxes_collide(&position, &obstacle.position, size, obstacle.size)
-    })
+pub fn any_obstacle_collide(position: &Position, size: u64, config: &Config) -> Option<Obstacle> {
+    config
+        .game
+        .obstacles
+        .clone()
+        .into_iter()
+        .find(|obstacle| hit_boxes_collide(&position, &obstacle.position, size, obstacle.size))
 }
 
-pub fn any_projectile_collide(projectile: &Projectile, projectiles: &Vec<Projectile>) ->  Option<Projectile>{
-    projectiles.clone().into_iter().find(|list_projectile|{
-        hit_boxes_collide(&projectile.position, &list_projectile.position, projectile.size, list_projectile.size) && projectile.id != list_projectile.id && !projectile.attacked_player_ids.contains(&list_projectile.id)
+pub fn any_projectile_collide(
+    projectile: &Projectile,
+    projectiles: &Vec<Projectile>,
+) -> Option<Projectile> {
+    projectiles.clone().into_iter().find(|list_projectile| {
+        hit_boxes_collide(
+            &projectile.position,
+            &list_projectile.position,
+            projectile.size,
+            list_projectile.size,
+        ) && projectile.id != list_projectile.id
+            && !projectile.attacked_player_ids.contains(&list_projectile.id)
     })
 }
 
@@ -68,6 +85,11 @@ pub fn next_position(
     let new_x = movement_amount.mul_add(angle_rad.cos(), current_position.x as f32);
     let new_y = movement_amount.mul_add(angle_rad.sin(), current_position.y as f32);
 
+    // if current_position.x.abs() > 1000 || current_position.y.abs() > 1000 {
+    //     // print!("{}/", direction_angle);
+    //     // print!("{}/", current_position.x);
+    //     // print!("{}\n", current_position.y);
+    // }
     // This is to avoid  the overflow on the front end
     let radius = (width - 200.0) / 2.0;
 
