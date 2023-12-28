@@ -1,15 +1,12 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::sync::Arc;
 
-use itertools::Itertools;
 use libm;
 use libm::atan2;
 use rustler::NifMap;
 use rustler::NifTaggedEnum;
 use rustler::NifTuple;
 use serde::Deserialize;
-use std::collections::HashMap;
 
 use crate::config::Config;
 use crate::effect;
@@ -626,12 +623,7 @@ fn move_projectiles(
         projectile.active
             && projectile.duration_ms > 0
             && projectile.max_distance > 0
-            && if let Some(player_id) = map::collision_with_edge(
-                &projectile,
-                players,
-                config.game.width,
-                config.game.height,
-            ) {
+            && if let Some(player_id) = map::collision_with_edge(&projectile, players) {
                 pending_damages.push(DamageTracker {
                     attacked_id: player_id,
                     attacker: EntityOwner::Player(projectile.player_id),
@@ -666,7 +658,7 @@ fn move_projectiles(
 fn apply_projectiles_collisions(
     projectiles: &mut [Projectile],
     players: &mut HashMap<u64, Player>,
-    pending_damages: &mut Vec<DamageTracker>,
+    _pending_damages: &mut Vec<DamageTracker>,
 ) {
     projectiles.iter_mut().for_each(|projectile| {
         for player in players.values_mut() {
@@ -697,7 +689,7 @@ fn apply_projectiles_collisions(
                     projectile.active = false;
                 }
 
-                if (projectile.bounce) {
+                if projectile.bounce {
                     let dy = -(projectile.position.y + (projectile.size / 2) as i64)
                         + (player.position.y + (player.size / 2) as i64);
                     let dx = -(projectile.position.x + (projectile.size / 2) as i64)
@@ -711,6 +703,26 @@ fn apply_projectiles_collisions(
                     projectile.direction_angle = reflection_angle;
                 }
                 break;
+            }
+        }
+
+        if let Some(player_id) = map::collision_with_edge(&projectile, players) {
+            if let Some(collided_zone_player) = players.get_mut(&player_id) {
+                if collided_zone_player.status == PlayerStatus::Death && projectile.bounce {
+                    let dy = -(projectile.position.y + (projectile.size / 2) as i64)
+                        + (collided_zone_player.position.y
+                            + (collided_zone_player.size / 2) as i64);
+                    let dx = -(projectile.position.x + (projectile.size / 2) as i64)
+                        + (collided_zone_player.position.x
+                            + (collided_zone_player.size / 2) as i64);
+                    let angle_between = atan2(dy as f64, dx as f64) as f32;
+
+                    let normalized_angle = (angle_between + 360.0) % 360.0;
+
+                    let reflection_angle = 2.0 * normalized_angle - projectile.direction_angle;
+
+                    projectile.direction_angle = reflection_angle;
+                }
             }
         }
     });

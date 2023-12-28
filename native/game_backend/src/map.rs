@@ -78,12 +78,7 @@ pub fn next_position(
     }
 }
 
-pub fn collision_with_edge(
-    projectile: &Projectile,
-    players: &HashMap<u64, Player>,
-    width: u64,
-    height: u64,
-) -> Option<u64> {
+pub fn collision_with_edge(projectile: &Projectile, players: &HashMap<u64, Player>) -> Option<u64> {
     let (_, x_edge_positive) = players.iter().max_by_key(|(_, player)| player.position.x)?;
     let x_position_positive = projectile.position.x + projectile.size as i64;
     if x_position_positive > x_edge_positive.position.x && projectile.player_id != 2 {
