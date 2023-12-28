@@ -1,10 +1,5 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::sync::Arc;
-
-use itertools::Itertools;
-use libm;
-use libm::atan2;
 use rustler::NifMap;
 use rustler::NifTaggedEnum;
 use rustler::NifTuple;
@@ -643,7 +638,19 @@ fn move_projectiles(
             }
     });
 
+
+    let untouched_projectiles = projectiles.clone();
     projectiles.iter_mut().for_each(|projectile| {
+        if let Some(obstacle) = map::any_obstacle_collide(&projectile.position, projectile.size, config){
+            projectile.calculate_bounce(&obstacle.position);
+            projectile.attacked_player_ids = vec![];
+        }
+
+        if let Some(collided_projectile) = map::any_projectile_collide(&projectile, &untouched_projectiles){
+            projectile.calculate_bounce(&collided_projectile.position);
+            projectile.update_attacked_list(&collided_projectile.id)
+        }
+        
         projectile.duration_ms = projectile.duration_ms.saturating_sub(time_diff);
         projectile.max_distance = projectile.max_distance.saturating_sub(projectile.speed);
         projectile.position = map::next_position(
@@ -658,7 +665,7 @@ fn move_projectiles(
 fn apply_projectiles_collisions(
     projectiles: &mut [Projectile],
     players: &mut HashMap<u64, Player>,
-    pending_damages: &mut Vec<DamageTracker>,
+    _pending_damages: &mut Vec<DamageTracker>,
 ) {
     projectiles.iter_mut().for_each(|projectile| {
         for player in players.values_mut() {
@@ -690,20 +697,8 @@ fn apply_projectiles_collisions(
                 }
 
                 if projectile.bounce {
-                    let player_projectile_angle =
-                        map::angle_between_positions(&projectile.position, &player.position);
-
-                    let angle_between_projectile_player =
-                        (player_projectile_angle + 180.) - projectile.direction_angle;
-
-                    if angle_between_projectile_player > 0. {
-                        projectile.direction_angle =
-                            (player_projectile_angle + angle_between_projectile_player) % 360.;
-                    } else {
-                        projectile.direction_angle =
-                            (player_projectile_angle - angle_between_projectile_player) % 360.;
-                    }
-
+                    projectile.calculate_bounce(&player.position);
+                    projectile.update_attacked_list(&player.id);
                     if player.effects.iter().any(|(effect, _owner)| effect.name == "bouncing") {
                         projectile.speed = (projectile.speed as f32 * 2.) as u64;
                     }

@@ -4,7 +4,7 @@ use rand::Rng;
 use rustler::NifMap;
 use serde::Deserialize;
 
-use crate::{player::Player, projectile::Projectile};
+use crate::{player::Player, projectile::Projectile, config::Config, game::Obstacle};
 
 #[derive(NifMap, Clone, Deserialize, Copy, Debug)]
 pub struct Position {
@@ -18,6 +18,18 @@ pub fn hit_boxes_collide(center1: &Position, center2: &Position, size1: u64, siz
     let centers_distance = (squared_x + squared_y).sqrt();
     let collision_distance = (size1 + size2) as f64;
     centers_distance <= collision_distance
+}
+
+pub fn any_obstacle_collide(position: &Position, size: u64, config: &Config) ->  Option<Obstacle>{
+    config.game.obstacles.clone().into_iter().find(|obstacle|{
+        hit_boxes_collide(&position, &obstacle.position, size, obstacle.size)
+    })
+}
+
+pub fn any_projectile_collide(projectile: &Projectile, projectiles: &Vec<Projectile>) ->  Option<Projectile>{
+    projectiles.clone().into_iter().find(|list_projectile|{
+        hit_boxes_collide(&projectile.position, &list_projectile.position, projectile.size, list_projectile.size) && projectile.id != list_projectile.id && !projectile.attacked_player_ids.contains(&list_projectile.id)
+    })
 }
 
 pub fn in_cone_angle_range(

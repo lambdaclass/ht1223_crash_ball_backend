@@ -1,7 +1,7 @@
-use crate::config::Config;
-use rand::Rng;
 use rustler::NifMap;
 use serde::Deserialize;
+use crate::{config::Config, map};
+use rand::Rng;
 
 use crate::{effect::Effect, map::Position};
 
@@ -31,7 +31,7 @@ pub struct ProjectileConfig {
     bounce: bool,
 }
 
-#[derive(NifMap)]
+#[derive(NifMap, Clone)]
 pub struct Projectile {
     pub name: String,
     pub damage: u64,
@@ -106,6 +106,28 @@ impl Projectile {
             bounce: config.bounce,
         }
     }
+
+    pub fn calculate_bounce(&mut self, position: &Position){
+        let player_projectile_angle =
+        map::angle_between_positions(&self.position, position);
+
+        let angle_between_projectile_player =
+            (player_projectile_angle + 180.) - self.direction_angle;
+
+        if angle_between_projectile_player > 0. {
+            self.direction_angle =
+                (player_projectile_angle + angle_between_projectile_player) % 360.;
+        } else {
+            self.direction_angle =
+                (player_projectile_angle - angle_between_projectile_player) % 360.;
+        }
+    }
+
+    pub fn update_attacked_list(&mut self, id: &u64){
+        if !self.attacked_player_ids.contains(id) {
+            self.attacked_player_ids = vec![id.clone()];
+        }
+    }
 }
 
 pub fn spawn_ball(config: &Config, id: u64) -> Option<Projectile> {
@@ -113,7 +135,7 @@ pub fn spawn_ball(config: &Config, id: u64) -> Option<Projectile> {
     let angle = rng.gen_range(0.0..360.);
     Some(Projectile::new(
         id,
-        Position { x: 0, y: 0 },
+        Position {x: rng.gen_range(0..50), y: rng.gen_range(0..50)},
         angle,
         15,
         &config.projectiles[0],
