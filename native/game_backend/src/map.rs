@@ -52,7 +52,7 @@ pub fn next_position(
     movement_amount: f32,
     width: f32,
 ) -> Position {
-    let angle_rad = direction_angle * (PI / 180.0);
+    let angle_rad = direction_angle.to_radians();
     let new_x = movement_amount.mul_add(angle_rad.cos(), current_position.x as f32);
     let new_y = movement_amount.mul_add(angle_rad.sin(), current_position.y as f32);
 
