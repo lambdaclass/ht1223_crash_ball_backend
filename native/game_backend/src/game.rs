@@ -45,10 +45,9 @@ pub struct GameConfigFile {
 }
 
 #[derive(Deserialize, NifMap, Debug, Clone, Copy)]
-pub struct Obstacle{
+pub struct Obstacle {
     pub position: Position,
     pub size: u64,
-    
 }
 
 #[derive(Deserialize)]
