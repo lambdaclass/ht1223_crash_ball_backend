@@ -26,6 +26,12 @@ pub fn any_obstacle_collide(position: &Position, size: u64, config: &Config) -> 
     })
 }
 
+pub fn any_projectile_collide(projectile: &Projectile, projectiles: &Vec<Projectile>) ->  Option<Projectile>{
+    projectiles.clone().into_iter().find(|list_projectile|{
+        hit_boxes_collide(&projectile.position, &list_projectile.position, projectile.size, list_projectile.size) && projectile.id != list_projectile.id && !projectile.attacked_player_ids.contains(&list_projectile.id)
+    })
+}
+
 pub fn in_cone_angle_range(
     center_player: &Player,
     target_player: &Player,
