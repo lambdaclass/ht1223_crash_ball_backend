@@ -1,6 +1,6 @@
 use rustler::NifMap;
 use serde::Deserialize;
-use crate::config::Config;
+use crate::{config::Config, map};
 use rand::Rng;
 
 use crate::{effect::Effect, map::Position};
@@ -104,6 +104,22 @@ impl Projectile {
             active: true,
             attacked_player_ids: vec![],
             bounce: config.bounce,
+        }
+    }
+
+    pub fn calculate_bounce(&mut self, position: &Position){
+        let player_projectile_angle =
+        map::angle_between_positions(&self.position, position);
+
+        let angle_between_projectile_player =
+            (player_projectile_angle + 180.) - self.direction_angle;
+
+        if angle_between_projectile_player > 0. {
+            self.direction_angle =
+                (player_projectile_angle + angle_between_projectile_player) % 360.;
+        } else {
+            self.direction_angle =
+                (player_projectile_angle - angle_between_projectile_player) % 360.;
         }
     }
 }
