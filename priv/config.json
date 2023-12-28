@@ -12,7 +12,7 @@
         {
           "attribute": "size",
           "modifier": "Multiplicative",
-          "value": "2."
+          "value": "1.5"
         }
       ],
       "projectile_attributes": [],
