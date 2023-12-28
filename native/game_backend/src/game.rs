@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::sync::Arc;
 
-use itertools::Itertools;
 use libm;
 use libm::atan2;
 use rustler::NifMap;
@@ -45,13 +43,19 @@ pub struct GameConfigFile {
     auto_aim_max_distance: f32,
     initial_positions: HashMap<u64, Position>,
     tick_interval_ms: u64,
-    obstacles: Vec<Obstacle>
+    obstacles: Vec<Obstacle>,
 }
 
 #[derive(Deserialize, NifMap, Debug, Clone, Copy)]
-pub struct Obstacle{
+pub struct Obstacle {
     pub position: Position,
-    pub size: u64,
+    pub shape: Shape,
+}
+
+#[derive(Deserialize, NifTaggedEnum, Debug, Clone, Copy)]
+pub enum Shape {
+    Rectangle { width: i64, height: i64 },
+    Circle { radius: i64 },
 }
 
 #[derive(Deserialize)]
@@ -74,7 +78,7 @@ pub struct GameConfig {
     pub auto_aim_max_distance: f32,
     pub initial_positions: HashMap<u64, Position>,
     pub tick_interval_ms: u64,
-    pub obstacles: Vec<Obstacle>
+    pub obstacles: Vec<Obstacle>,
 }
 
 #[derive(NifMap, Clone, Debug)]
@@ -127,6 +131,7 @@ pub struct GameState {
     pub zone: Zone,
     pub next_id: u64,
     pub pending_damages: Vec<DamageTracker>,
+    pub obstacles: Vec<Obstacle>,
 }
 
 impl GameConfig {
@@ -168,6 +173,7 @@ impl GameState {
         let zone_modifications = config.game.zone_modifications.clone();
         let game_width = config.game.width;
         let game_height = config.game.height;
+        let obstacles = config.game.obstacles.to_owned();
 
         Self {
             config,
@@ -185,6 +191,7 @@ impl GameState {
             killfeed: Vec::new(),
             next_id: 1,
             pending_damages: Vec::new(),
+            obstacles,
         }
     }
 
@@ -470,6 +477,7 @@ impl GameState {
             &mut self.projectiles,
             &mut self.players,
             &mut self.pending_damages,
+            &mut self.obstacles,
         );
         remove_expired_effects(&mut self.players);
         run_effects(&mut self.players, time_diff, &mut self.pending_damages);
@@ -651,7 +659,8 @@ fn move_projectiles(
 fn apply_projectiles_collisions(
     projectiles: &mut [Projectile],
     players: &mut HashMap<u64, Player>,
-    pending_damages: &mut Vec<DamageTracker>,
+    _pending_damages: &mut Vec<DamageTracker>,
+    obstacles: &mut Vec<Obstacle>,
 ) {
     projectiles.iter_mut().for_each(|projectile| {
         for player in players.values_mut() {
@@ -682,7 +691,7 @@ fn apply_projectiles_collisions(
                     projectile.active = false;
                 }
 
-                if (projectile.bounce) {
+                if projectile.bounce {
                     let dy = -(projectile.position.y + (projectile.size / 2) as i64)
                         + (player.position.y + (player.size / 2) as i64);
                     let dx = -(projectile.position.x + (projectile.size / 2) as i64)
@@ -698,7 +707,17 @@ fn apply_projectiles_collisions(
                 break;
             }
         }
+        for obstacle in obstacles.iter_mut() {
+            if collides_with_obstacle(projectile, obstacle) {
+                // do stuff
+                let _a = 2 + 2;
+            }
+        }
     });
+}
+
+fn collides_with_obstacle(_projectile: &mut Projectile, _obstacle: &mut Obstacle) -> bool {
+    return true;
 }
 
 fn run_effects(

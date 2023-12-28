@@ -11,6 +11,7 @@ use crate::effect::Effect;
 use crate::effect::TimeType;
 use crate::game::DamageTracker;
 use crate::game::EntityOwner;
+use crate::game::Shape;
 use crate::loot::Loot;
 use crate::map;
 use crate::map::Position;
@@ -404,10 +405,21 @@ impl Player {
         self.skill_moving_params.is_none()
     }
 
-    fn any_obstacle_collide(&mut self, config: &Config) ->  bool{
-        config.game.obstacles.clone().into_iter().any(|obstacle|{
-            map::hit_boxes_collide(&self.position, &obstacle.position, self.size, obstacle.size)
-        })
+    fn any_obstacle_collide(&mut self, config: &Config) -> bool {
+        config
+            .game
+            .obstacles
+            .clone()
+            .into_iter()
+            .any(|obstacle| match obstacle.shape {
+                Shape::Circle{radius: radius} => map::hit_boxes_collide(
+                    &self.position,
+                    &obstacle.position,
+                    self.size,
+                    radius as u64,
+                ),
+                Shape::Rectangle{width: _width, height: _height} => false,
+            })
     }
 }
 

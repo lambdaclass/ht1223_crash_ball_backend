@@ -23,7 +23,7 @@ defmodule DarkWorldsServer.Config.Games do
   end
 
   # We only have one game for now
-  def get_game(), do: Repo.one(from(g in Game)) |> Repo.preload(zone_modifications: :outside_radius_effects)
+  def get_game(), do: Repo.one(from(g in Game)) |> Repo.preload(:obstacles) |> Repo.preload(zone_modifications: :outside_radius_effects)
 
   def delete_all_games(), do: Repo.delete_all(Game)
 

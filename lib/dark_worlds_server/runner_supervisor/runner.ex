@@ -2,9 +2,6 @@ defmodule DarkWorldsServer.RunnerSupervisor.Runner do
   use GenServer, restart: :transient
   require Logger
   alias DarkWorldsServer.Communication
-  alias DarkWorldsServer.Communication.Proto.Move
-  alias DarkWorldsServer.Communication.Proto.UseInventory
-  alias DarkWorldsServer.Communication.Proto.UseSkill
   alias DarkWorldsServer.Utils.Characters
   alias DarkWorldsServer.Utils.Config
 

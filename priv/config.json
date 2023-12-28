@@ -351,28 +351,44 @@
           "x": 1000,
           "y": -1000 
         },
-        "size": 200
+        "shape": {
+          "Circle": {
+            "radius": 200 
+          }
+        }
       },
       {
         "position": {
           "x": -1000,
           "y": -1000 
         },
-        "size": 200
+        "shape": {
+          "Circle": {
+            "radius": 200 
+          }
+        }
       },
       {
         "position": {
           "x": 1000,
           "y": 1000 
         },
-        "size": 200
+        "shape": {
+          "Circle": {
+            "radius": 200 
+          }
+        }
       },
       {
         "position": {
           "x": -1000,
           "y": 1000 
         },
-        "size": 200
+        "shape": {
+          "Circle": {
+            "radius": 200 
+          }
+        }
       }
     ],
     "zone_modifications": [
