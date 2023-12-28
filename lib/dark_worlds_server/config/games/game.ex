@@ -70,4 +70,5 @@ defmodule DarkWorldsServer.Config.Games.Game do
 
   defp transform_map_keys_to_atoms(map) do
     Enum.into(map, %{}, fn {key, value} -> {String.to_atom(key), value} end)
+  end
 end
